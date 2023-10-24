@@ -1,10 +1,16 @@
 import os
 import re
 import subprocess
+import pandas as pd
 
 from collections import deque
 
 regex = re.compile( r'[\t]' )
+
+def pprint_ast( datas, n_level = 1 ):
+    for data in datas:
+        print( f"{'|'*(n_level-1)}-{data['kind']}, {data['start_line']}, {data['end_line']}" )
+        pprint_ast( data['inner'], n_level=n_level+1 )
 
 def clean_comment_c( file_dir, output, timeout=20 ):
     command = f'gcc -fpreprocessed -dD -E -P {file_dir} > {output}'
@@ -137,3 +143,6 @@ def drop_dup( items ):
             new_items[i]['inner'] = drop_dup( item['inner'] )
 
     return new_items
+
+def drop_dup_pd( items ):
+    return items.drop_duplicates( subset=['for_start', 'for_end'] )

@@ -7,11 +7,12 @@ import json
 import uuid
 import time
 import pandas as pd
+import subprocess
 
 from collections import deque
 
 cur_location = '/work/soratouch-p/repos_data'
-output_location = cur_location + '/output/'
+output_location = cur_location + '/output2/'
 
 file_list_location = cur_location + '/omp_file_list_2.pkl'
 
@@ -21,9 +22,6 @@ GIGA = 1024 * 1024 * 1024
 
 log_file = cur_location + '/error/log.log'
 err_file = cur_location + '/error/error.log'
-
-def timeout_handler( num, stack ):
-    raise Exception('Timeout')
 
 ### for clean comment 
 if __name__ == '__main__':
@@ -42,8 +40,6 @@ if __name__ == '__main__':
 
     # df = df[0:]
 
-    signal.signal( signal.SIGALRM, timeout_handler )
-
     for i, item in df.iterrows():
 
         ############### Clean Comment #############
@@ -57,7 +53,7 @@ if __name__ == '__main__':
         input_file = cur_location + file_path
         clean_comment_file = cur_location + '/'.join( tmp_path )
         try:
-            preprocess_util.clean_comment_c( input_file, clean_comment_file )
+            preprocess_util.clean_comment_c( input_file, clean_comment_file, timeout=60 )
         except:
             with open( err_file, 'a' ) as err:
                 err.write( f'CLEAN TASKID:{task_id} [{i}] {file_path}\n' )
@@ -66,27 +62,26 @@ if __name__ == '__main__':
         ################ AST DUMP ##############
         if( os.path.exists( tmp_ast ) ):
             os.remove( tmp_ast )
-            
-        time.sleep(1)
-        signal.alarm( TIMEOUT )
         try:
-            preprocess_util.ast_dump_json( clean_comment_file, tmp_ast )
+            preprocess_util.ast_dump_json( clean_comment_file, tmp_ast, timeout=45 )
+        except subprocess.TimeoutExpired:
+            if( os.path.exists( tmp_ast ) ):
+                os.remove( tmp_ast )
+            with open( err_file, 'a' ) as err:
+                err.write( f'ASTDUMPTIMEOUT TASKID:{task_id} [{i}] {file_path}\n' )
+            continue
         except:
-            signal.alarm( 0 )
             with open( err_file, 'a' ) as err:
                 err.write( f'ASTDUMP TASKID:{task_id} [{i}] {file_path}\n')
             if( os.path.exists( tmp_ast ) ):
                 os.remove( tmp_ast )
             continue
-        finally:
-            signal.alarm( 0 )
-            time.sleep(1)
         
         ################# TRAV AST ###############
         file_stats = os.stat( tmp_ast )
-        if( ( file_stats.st_size / GIGA ) > 10 ):
+        if( ( file_stats.st_size / GIGA ) > 102.4 ):
             with open( err_file, 'a' ) as err:
-                err.write( f'TRAVERSE TASKID:{task_id} [{i}] {file_path}\n')
+                err.write( f'TRAVERSESIZE TASKID:{task_id} [{i}] {file_path}\n')
             continue
         
         try:
@@ -109,7 +104,7 @@ if __name__ == '__main__':
             if( os.path.exists( filename ) ):
                 filename = str( uuid.uuid4() )
 
-            tmp_data = { 'file_path': file_path, 'data': ast }
+            tmp_data = { 'file_path': file_path, 'uncomment_source': clean_comment_file, 'data': ast }
             pd.DataFrame( tmp_data ).to_pickle( output_location + filename + '.pkl' ) 
         except:
             with open( err_file, 'a' ) as err:
