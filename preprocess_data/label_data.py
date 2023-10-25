@@ -59,7 +59,7 @@ if __name__ == '__main__':
                 continue
             filename = df.iloc[0]['file_path']
             filename_nc = df.iloc[0]['uncomment_source']
-            with open( cur_location + filename_nc, 'r' ) as s_f:
+            with open( filename_nc, 'r' ) as s_f:
                 raw = s_f.readlines()
             for i, row in df.iterrows():
                 data = row['data']
