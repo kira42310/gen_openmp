@@ -145,4 +145,6 @@ def drop_dup( items ):
     return new_items
 
 def drop_dup_pd( items ):
-    return items.drop_duplicates( subset=['for_start', 'for_end'] )
+    return items.sort_values( [ 'for_start', 'for_end', 'parallel' ], ascending=[ True, True, False ] ) \
+            .drop_duplicates( subset=['for_start', 'for_end'] ) \
+            .reset_index( drop=True )

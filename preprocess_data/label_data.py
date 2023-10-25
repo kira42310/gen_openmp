@@ -66,7 +66,7 @@ if __name__ == '__main__':
                 data = preprocess_util.drop_dup( [data] )
                 for d in data:
                     data_list.extend( preprocess_util.label_data( d, raw, filename, filename_nc ) )
-            data_df = pd.concat( [ data_df, pd.DataFrame(data_list) ], ignore_index=True )
+            data_df = pd.concat( [ data_df, preprocess_util.drop_dup_pd( pd.DataFrame(data_list) ) ], ignore_index=True )
         
         except:
             with open( err_file, 'a' ) as e_f:
