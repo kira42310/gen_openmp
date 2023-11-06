@@ -131,11 +131,11 @@ def main( args ):
     argsdict = vars(args)
     print(pprint.pformat(argsdict))
 
-    if( os.path.exists( args.save_dir ) ):
+    if( ~os.path.exists( args.save_dir ) ):
         os.makedirs( args.save_dir )
-    if( os.path.exists( args.cache_data ) ):
+    if( ~os.path.exists( args.cache_data ) ):
         os.makedirs( args.cache_data )
-    if( os.path.exists( args.eval_data ) ):
+    if( ~os.path.exists( args.eval_data ) ):
         os.makedirs( args.eval_data )
 
     # Save command to file
