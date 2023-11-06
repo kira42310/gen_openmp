@@ -133,6 +133,10 @@ def main( args ):
 
     if( os.path.exists( args.save_dir ) ):
         os.makedirs( args.save_dir )
+    if( os.path.exists( args.cache_data ) ):
+        os.makedirs( args.cache_data )
+    if( os.path.exists( args.eval_data ) ):
+        os.makedirs( args.eval_data )
 
     # Save command to file
     with open(os.path.join(args.save_dir, "command.txt"), 'w') as f:
@@ -170,8 +174,8 @@ if __name__ == "__main__":
     parser.add_argument('--max-target-len', default=128, type=int)
     parser.add_argument('--instruct-data-path', default='../data/training_data.pkl', type=str)
     parser.add_argument('--evaluate-data-path', default='../data/eval_data.pkl', type=str)
-    parser.add_argument('--cache-data', default='train_cache', type=str)
-    parser.add_argument('--eval-data', default='eval_cache', type=str)
+    parser.add_argument('--cache-data', default='cache_data/train_cache', type=str)
+    parser.add_argument('--eval-data', default='cache_data/eval_cache', type=str)
     parser.add_argument('--load', default='Salesforce/codet5p-220m-bimodal', type=str)
 
     # Training
