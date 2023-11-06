@@ -148,3 +148,21 @@ def drop_dup_pd( items ):
     return items.sort_values( [ 'for_start', 'for_end', 'parallel' ], ascending=[ True, True, False ] ) \
             .drop_duplicates( subset=['for_start', 'for_end'] ) \
             .reset_index( drop=True )
+
+def create_training_data_generative( items, frac, seed ):
+    tmp_df = items[['for_raw','omp_raw']]
+    tmp_df = tmp_df[ ~tmp_df['omp_raw'].isnull() ]
+    tmp_df = tmp_df.rename( columns={ 'for_raw': 'source', 'omp_raw': 'target' } )
+    tmp_df = tmp_df.drop_duplicates()
+    tr_df = tmp_df.sample( frac=frac, random_state=seed )
+    ev_df = tmp_df.drop( tr_df.index ).reset_index( drop=True )
+    tr_df = tr_df.reset_index( drop=True )
+    return {
+        'train_data': tr_df,
+        'eval_data': ev_df
+    }
+
+def create_training_data_classification( items ):
+    tmp_df = items[['for_raw','parallel']]
+    tmp_df = tmp_df.rename( columns={ 'for_raw': 'source', 'parallel': 'target' } )
+    return tmp_df
