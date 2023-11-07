@@ -183,9 +183,9 @@ if __name__ == "__main__":
     parser.add_argument('--lr', default=5e-5, type=float)
     parser.add_argument('--lr-warmup-steps', default=200, type=int)
     parser.add_argument('--batch-size-per-replica', default=1, type=int)
-    parser.add_argument('--grad-acc-steps', default=4, type=int)
+    parser.add_argument('--grad-acc-steps', default=40, type=int)
     parser.add_argument('--local_rank', default=-1, type=int)
-    parser.add_argument('--deepspeed', default=None, type=str)
+    parser.add_argument('--deepspeed', default="deepspeed_config.json", type=str)
     parser.add_argument('--fp16', default=False, action='store_true')
     parser.add_argument('--early_stop', default=4, type=int)
 
