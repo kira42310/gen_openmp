@@ -52,7 +52,7 @@ def run_training( args, model, train_data, eval_data ):
         save_total_limit=1,
 
         dataloader_drop_last=True,
-        dataloader_num_workers=4,
+        dataloader_num_workers=1,
 
         local_rank=args.local_rank,
         deepspeed=args.deepspeed,
@@ -64,7 +64,7 @@ def run_training( args, model, train_data, eval_data ):
     trainer = Trainer( 
         model=model,
         args=training_args,
-        compute_metrics=compute_metrics,
+        # compute_metrics=compute_metrics,
         train_dataset=train_data,
         eval_dataset=eval_data,
         callbacks=[ EarlyStoppingCallback(early_stopping_patience=args.early_stop) ]
@@ -194,6 +194,8 @@ if __name__ == "__main__":
     parser.add_argument('--log-freq', default=10, type=int)
     parser.add_argument('--save-freq', default=500, type=int)
 
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:24,roundup_power2_divisions:4,garbage_collection_threshold:0.5"
+    
     args = parser.parse_args()
 
     # os.makedirs(args.save_dir, exist_ok=True)
