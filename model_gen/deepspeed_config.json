@@ -21,6 +21,7 @@
         "stage3_max_reuse_distance": 1e9,
         "stage3_prefetch_bucket_size": 1e7,
         "stage3_param_persistence_threshold": 1e5,
+        "stage3_gather_16bit_weights_on_model_save": true,
         "allgather_partitions": true,
         "allgather_bucket_size": 1e8,
         "overlap_comm": true,
@@ -51,7 +52,7 @@
         "params": {
             "last_batch_iteration": -1,
             "total_num_steps": "auto",
-            "warmup_min_lr": 1e-5,
+            "warmup_min_lr": "auto",
             "warmup_max_lr": "auto",
             "warmup_num_steps": "auto",
             "warmup_type": "linear"

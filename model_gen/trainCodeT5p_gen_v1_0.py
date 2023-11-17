@@ -3,6 +3,8 @@ import argparse
 import pprint
 import pandas as pd
 import torch
+import evaluate
+import numpy as np
 
 from datasets import Dataset, load_dataset, load_from_disk
 from torch.utils.data import DataLoader
@@ -13,20 +15,49 @@ location = '/home/mudang/script/gen_openmp/'
 data_location = location + 'data/'
 
 def compute_metrics( pred ):
-    labels = pred.label_ids
-    preds = pred.prediction.argmax(-1)
+    preds, labels = pred
+
+    print( '' )
+    print( len( preds ) )
+    print( preds[0] )
+    print( len( labels ) )
+    print( labels[0] )
+
+    # decoded_preds = [ tokenizer.decode( pred, skip_special_tokens=True ) for pred in preds ]
+    # decoded_labels = [ tokenizer.decode( label, skip_special_tokens=True ) for label in labels ]
+    print( '-----------------------------1-----------------------------' )
+    decoded_preds = tokenizer.batch_decode( preds, skip_special_tokens=True )
+    #decoded_preds = [ tokenizer.decode( pred[0], skip_special_tokens=True ) for pred in preds ]
+    print( '-----------------------------2-----------------------------' )
+    # labels = [ [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in model_inputs["labels"] ]
+    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+    print( '-----------------------------3-----------------------------' )
+    decoded_labels = tokenizer.batch_decode( labels, skip_special_tokens=True )
+    print( '-----------------------------4-----------------------------' )
+    # predictions = np.
+    # labels = pred.label_ids
+    # preds = pred.prediction.argmax(-1)
 
     # em = exact match
-    em = sum( [ 1 if p == l else 0 for p, l in zip( preds, labels ) ]  ) / len( labels )
+    # em = sum( [ 1 if p == l else 0 for p, l in zip( preds, labels ) ]  ) / len( labels )
 
-    f1 = f1_score( labels, preds, average='marco' )
+    # f1 = f1_score( labels, preds, average='marco' )
     
-    return {
-        'f1': f1,
-        'exact_match': em
-    }
+    # return {
+    #     'f1': f1,
+    #     'exact_match': em
+    # }
+    print( decoded_labels )
+    # print( labels )
+    print( decoded_preds )
+    results = metric.compute( predictions=decoded_preds, references=decoded_labels )
+    #results = metric.compute( predictions=decoded_preds, references=labels )
+    # results = metric.compute( predictions=preds, references=labels )
+    #print( results )
+    return results
 
-def run_training( args, model, train_data, eval_data ):
+def run_training( args, model, device, train_data, eval_data ):
+# def run_training( args, model, train_data ):
     # do somethings
 
     training_args = TrainingArguments(
@@ -40,7 +71,9 @@ def run_training( args, model, train_data, eval_data ):
 
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size_per_replica,
+        per_device_eval_batch_size=args.batch_size_per_replica,
         gradient_accumulation_steps=args.grad_acc_steps,
+        eval_accumulation_steps=args.grad_acc_steps,
 
         learning_rate=args.lr,
         weight_decay=0.05,
@@ -64,9 +97,12 @@ def run_training( args, model, train_data, eval_data ):
     trainer = Trainer( 
         model=model,
         args=training_args,
-        # compute_metrics=compute_metrics,
+        # tokenizer=tokenizer,
+        compute_metrics=compute_metrics,
         train_dataset=train_data,
         eval_dataset=eval_data,
+        # train_dataset=train_data['train'],
+        # eval_dataset=train_data['test'],
         callbacks=[ EarlyStoppingCallback(early_stopping_patience=args.early_stop) ]
     )
 
@@ -78,54 +114,65 @@ def run_training( args, model, train_data, eval_data ):
 
     if args.local_rank in [0, -1]:
         final_checkpoint_dir = os.path.join(args.save_dir, "final_checkpoint")
-        model.save_pretrained(final_checkpoint_dir)
+        # model.save_pretrained(final_checkpoint_dir)
+        # model.save_state()
+        trainer.save_model()
         print(f'  ==> Finish training and save to {final_checkpoint_dir}')
 
 def load_tokenize_data(args, device):
-    # Load and tokenize data
-    # Example code to load and process code_x_glue_ct_code_to_text python dataset for code summarization task
-    # datasets = load_dataset("code_x_glue_ct_code_to_text", 'python', split="train")
-    df = pd.read_pickle( args.instruct_data_path )
-    datasets = Dataset.from_pandas( df )
-    ev_df = pd.read_pickle( args.evaluate_data_path )
-    evsets = Dataset.from_pandas( ev_df )
-    tokenizer = AutoTokenizer.from_pretrained(args.load)
+    if os.path.exists( args.cache_data ):
+        train_data = load_from_disk( args.cache_data )
+        eval_data = load_from_disk( args.eval_data )
+        print( f'  ==> Loaded {len(train_data)} samples' )
+        print( f'  ==> Loaded {len(eval_data)} samples' )
+        return train_data, eval_data
+    else:
+        # Load and tokenize data
+        # Example code to load and process code_x_glue_ct_code_to_text python dataset for code summarization task
+        # datasets = load_dataset("code_x_glue_ct_code_to_text", 'python', split="train")
+        df = pd.read_pickle( args.instruct_data_path )
+        datasets = Dataset.from_pandas( df )
+        # datasets = datasets.train_test_split( test_size=0.2 )
+        ev_df = pd.read_pickle( args.evaluate_data_path )
+        evsets = Dataset.from_pandas( ev_df )
+        # tokenizer = AutoTokenizer.from_pretrained(args.load)
 
-    def preprocess_function(examples):
-        # source = [' '.join(ex) for ex in examples["code_tokens"]]
-        # target = [' '.join(ex) for ex in examples["docstring_tokens"]]
-        source = examples['source']
-        target = examples['target']
+        def preprocess_function(examples):
+            # source = [' '.join(ex) for ex in examples["code_tokens"]]
+            # target = [' '.join(ex) for ex in examples["docstring_tokens"]]
+            source = examples['source']
+            target = examples['target']
 
-        model_inputs = tokenizer(source, max_length=args.max_source_len, padding="max_length", truncation=True)
-        labels = tokenizer(target, max_length=args.max_target_len, padding="max_length", truncation=True)
+            model_inputs = tokenizer(source, max_length=args.max_source_len, padding="max_length", truncation=True)
+            labels = tokenizer(target, max_length=args.max_target_len, padding="max_length", truncation=True)
 
-        model_inputs["labels"] = labels["input_ids"].copy()
-        model_inputs["labels"] = [
-            [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in model_inputs["labels"]
-        ]
-        return model_inputs
+            model_inputs["labels"] = labels["input_ids"].copy()
+            model_inputs["labels"] = [
+                [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in model_inputs["labels"]
+            ]
+            return model_inputs
 
-    train_data = datasets.map(
-        preprocess_function,
-        batched=True,
-        remove_columns=datasets.column_names,
-        num_proc=4,
-        load_from_cache_file=False,
-    )
+        train_data = datasets.map(
+            preprocess_function,
+            batched=True,
+            remove_columns=datasets.column_names,
+            num_proc=2,
+            load_from_cache_file=False,
+        )
 
-    eval_data = evsets.map(
-        preprocess_function,
-        batched=True,
-        remove_columns=datasets.column_names,
-        num_proc=4,
-        load_from_cache_file=False
-    )
-    print(f'  ==> Loaded {len(train_data)} samples')
-    train_data.save_to_disk(args.cache_data)
-    print(f'  ==> Saved to {args.cache_data}')
-    eval_data.save_to_disk( args.eval_data )
-    return train_data, eval_data
+        eval_data = evsets.map(
+           preprocess_function,
+           batched=True,
+           remove_columns=datasets.column_names,
+           num_proc=2,
+           load_from_cache_file=False,
+        )
+        print(f'  ==> Loaded {len(train_data)} samples')
+        train_data.save_to_disk(args.cache_data)
+        print(f'  ==> Saved to {args.cache_data}')
+        eval_data.save_to_disk( args.eval_data )
+        return train_data, eval_data
+        # return train_data
 
 def main( args ):
     argsdict = vars(args)
@@ -133,10 +180,10 @@ def main( args ):
 
     if( not os.path.exists( args.save_dir ) ):
         os.makedirs( args.save_dir )
-    if( not os.path.exists( args.cache_data ) ):
-        os.makedirs( args.cache_data )
-    if( not os.path.exists( args.eval_data ) ):
-        os.makedirs( args.eval_data )
+    # if( not os.path.exists( args.cache_data ) ):
+    #     os.makedirs( args.cache_data )
+    # if( not os.path.exists( args.eval_data ) ):
+    #     os.makedirs( args.eval_data )
 
     # Save command to file
     with open(os.path.join(args.save_dir, "command.txt"), 'w') as f:
@@ -144,18 +191,31 @@ def main( args ):
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+    global tokenizer
+    global metric
+
+    tokenizer = AutoTokenizer.from_pretrained(args.load)
+    # metric = evaluate.load('exact_match')
+    metric = evaluate.load('accuracy')
+
     # Load and tokenize data using the tokenizer from `args.load`. If the data is already cached, load it from there.
     # You can customize this function to load your own data for any Seq2Seq LM tasks.
     train_data, eval_data = load_tokenize_data(args, device)
+    # train_data = load_tokenize_data(args, device)
+
+    # print( train_data['train'] )
+    # print( train_data['test'] )
 
     # if args.data_num != -1:
     #     train_data = train_data.select([i for i in range(args.data_num)])
 
     # Load model from `args.load`
-    model = AutoModel.from_pretrained(args.load, trust_remote_code=True).to(device)
+    # model = AutoModel.from_pretrained(args.load, trust_remote_code=True).to(device)
+    model = AutoModel.from_pretrained(args.load, trust_remote_code=True)
     print(f"  ==> Loaded model from {args.load}, model size {model.num_parameters()}")
 
-    run_training(args, model, train_data, eval_data)
+    run_training(args, model, device, train_data, eval_data)
+    # run_training(args, model, train_data )
 
 if __name__ == "__main__":
     # df = pd.read_pickle( data_location + '/data202310_stack_v3.pkl' )
@@ -190,11 +250,13 @@ if __name__ == "__main__":
     parser.add_argument('--early_stop', default=4, type=int)
 
     # Logging and stuff
-    parser.add_argument('--save-dir', default="saved_models/openmp_gen", type=str)
+    # parser.add_argument('--save-dir', default="saved_models/openmp_gen", type=str)
+    parser.add_argument('--save-dir', default="saved_models/test_openmp_gen", type=str)
     parser.add_argument('--log-freq', default=10, type=int)
     parser.add_argument('--save-freq', default=500, type=int)
 
-    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:24,roundup_power2_divisions:4,garbage_collection_threshold:0.5"
+    # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:24,roundup_power2_divisions:4,garbage_collection_threshold:0.5"
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
     
     args = parser.parse_args()
 
