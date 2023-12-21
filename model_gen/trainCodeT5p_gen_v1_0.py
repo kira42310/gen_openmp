@@ -17,23 +17,44 @@ data_location = location + 'data/'
 def compute_metrics( pred ):
     preds, labels = pred
 
+    print( '-----------------------------0-----------------------------' )
     print( '' )
     print( len( preds ) )
     print( preds[0] )
     print( len( labels ) )
     print( labels[0] )
 
-    # decoded_preds = [ tokenizer.decode( pred, skip_special_tokens=True ) for pred in preds ]
-    # decoded_labels = [ tokenizer.decode( label, skip_special_tokens=True ) for label in labels ]
-    print( '-----------------------------1-----------------------------' )
-    decoded_preds = tokenizer.batch_decode( preds, skip_special_tokens=True )
-    #decoded_preds = [ tokenizer.decode( pred[0], skip_special_tokens=True ) for pred in preds ]
-    print( '-----------------------------2-----------------------------' )
-    # labels = [ [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in model_inputs["labels"] ]
-    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
-    print( '-----------------------------3-----------------------------' )
-    decoded_labels = tokenizer.batch_decode( labels, skip_special_tokens=True )
-    print( '-----------------------------4-----------------------------' )
+    times = len( preds ) / 50
+
+    decoded_preds = []
+    decoded_labels = []
+
+    for i in range( times + 1 ):
+
+        start = i * 100
+        end = start + 100
+        if( end > len( preds ) ):
+            end = len( preds )
+
+        tmp_preds = preds[ start: end ]
+        tmp_labels = labels[ start: end ]
+
+        # decoded_preds = [ tokenizer.decode( pred, skip_special_tokens=True ) for pred in preds ]
+        # decoded_labels = [ tokenizer.decode( label, skip_special_tokens=True ) for label in labels ]
+        print( '-----------------------------1-----------------------------' )
+        # decoded_preds = tokenizer.batch_decode( tmp_preds, skip_special_tokens=True )
+        tmp_preds = tokenizer.batch_decode( tmp_preds, skip_special_tokens=True )
+        # decoded_preds = [ tokenizer.decode( pred, skip_special_tokens=True ) for pred in preds ]
+        print( '-----------------------------2-----------------------------' )
+        # labels = [ [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in model_inputs["labels"] ]
+        tmp_labels = np.where(labels != -100, tmp_labels, tokenizer.pad_token_id)
+        print( '-----------------------------3-----------------------------' )
+        tmp_labels = tokenizer.batch_decode( tmp_labels, skip_special_tokens=True )
+        print( '-----------------------------4-----------------------------' )
+        decoded_preds.extend( tmp_preds )
+        decoded_labels.extend( tmp_labels )
+        del tmp_preds
+        del tmp_labels
     # predictions = np.
     # labels = pred.label_ids
     # preds = pred.prediction.argmax(-1)
@@ -98,7 +119,7 @@ def run_training( args, model, device, train_data, eval_data ):
         model=model,
         args=training_args,
         # tokenizer=tokenizer,
-        compute_metrics=compute_metrics,
+        # compute_metrics=compute_metrics,
         train_dataset=train_data,
         eval_dataset=eval_data,
         # train_dataset=train_data['train'],
@@ -120,59 +141,59 @@ def run_training( args, model, device, train_data, eval_data ):
         print(f'  ==> Finish training and save to {final_checkpoint_dir}')
 
 def load_tokenize_data(args, device):
-    if os.path.exists( args.cache_data ):
-        train_data = load_from_disk( args.cache_data )
-        eval_data = load_from_disk( args.eval_data )
-        print( f'  ==> Loaded {len(train_data)} samples' )
-        print( f'  ==> Loaded {len(eval_data)} samples' )
-        return train_data, eval_data
-    else:
-        # Load and tokenize data
-        # Example code to load and process code_x_glue_ct_code_to_text python dataset for code summarization task
-        # datasets = load_dataset("code_x_glue_ct_code_to_text", 'python', split="train")
-        df = pd.read_pickle( args.instruct_data_path )
-        datasets = Dataset.from_pandas( df )
-        # datasets = datasets.train_test_split( test_size=0.2 )
-        ev_df = pd.read_pickle( args.evaluate_data_path )
-        evsets = Dataset.from_pandas( ev_df )
-        # tokenizer = AutoTokenizer.from_pretrained(args.load)
+    # if os.path.exists( args.cache_data ):
+    #     train_data = load_from_disk( args.cache_data )
+    #     eval_data = load_from_disk( args.eval_data )
+    #     print( f'  ==> Loaded {len(train_data)} samples' )
+    #     print( f'  ==> Loaded {len(eval_data)} samples' )
+    #     return train_data, eval_data
+    # else:
+    # Load and tokenize data
+    # Example code to load and process code_x_glue_ct_code_to_text python dataset for code summarization task
+    # datasets = load_dataset("code_x_glue_ct_code_to_text", 'python', split="train")
+    df = pd.read_pickle( args.instruct_data_path )
+    datasets = Dataset.from_pandas( df )
+    # datasets = datasets.train_test_split( test_size=0.2 )
+    ev_df = pd.read_pickle( args.evaluate_data_path )
+    evsets = Dataset.from_pandas( ev_df )
+    # tokenizer = AutoTokenizer.from_pretrained(args.load)
 
-        def preprocess_function(examples):
-            # source = [' '.join(ex) for ex in examples["code_tokens"]]
-            # target = [' '.join(ex) for ex in examples["docstring_tokens"]]
-            source = examples['source']
-            target = examples['target']
+    def preprocess_function(examples):
+        # source = [' '.join(ex) for ex in examples["code_tokens"]]
+        # target = [' '.join(ex) for ex in examples["docstring_tokens"]]
+        source = examples['source']
+        target = examples['target']
 
-            model_inputs = tokenizer(source, max_length=args.max_source_len, padding="max_length", truncation=True)
-            labels = tokenizer(target, max_length=args.max_target_len, padding="max_length", truncation=True)
+        model_inputs = tokenizer(source, max_length=args.max_source_len, padding="max_length", truncation=True)
+        labels = tokenizer(target, max_length=args.max_target_len, padding="max_length", truncation=True)
 
-            model_inputs["labels"] = labels["input_ids"].copy()
-            model_inputs["labels"] = [
-                [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in model_inputs["labels"]
-            ]
-            return model_inputs
+        model_inputs["labels"] = labels["input_ids"].copy()
+        model_inputs["labels"] = [
+            [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in model_inputs["labels"]
+        ]
+        return model_inputs
 
-        train_data = datasets.map(
-            preprocess_function,
-            batched=True,
-            remove_columns=datasets.column_names,
-            num_proc=2,
-            load_from_cache_file=False,
-        )
+    train_data = datasets.map(
+        preprocess_function,
+        batched=True,
+        remove_columns=datasets.column_names,
+        num_proc=2,
+        load_from_cache_file=False,
+    )
 
-        eval_data = evsets.map(
-           preprocess_function,
-           batched=True,
-           remove_columns=datasets.column_names,
-           num_proc=2,
-           load_from_cache_file=False,
-        )
-        print(f'  ==> Loaded {len(train_data)} samples')
-        train_data.save_to_disk(args.cache_data)
-        print(f'  ==> Saved to {args.cache_data}')
-        eval_data.save_to_disk( args.eval_data )
-        return train_data, eval_data
-        # return train_data
+    eval_data = evsets.map(
+       preprocess_function,
+       batched=True,
+       remove_columns=datasets.column_names,
+       num_proc=2,
+       load_from_cache_file=False,
+    )
+    print(f'  ==> Loaded {len(train_data)} samples')
+    train_data.save_to_disk(args.cache_data)
+    print(f'  ==> Saved to {args.cache_data}')
+    eval_data.save_to_disk( args.eval_data )
+    return train_data, eval_data
+    # return train_data
 
 def main( args ):
     argsdict = vars(args)
@@ -230,7 +251,7 @@ if __name__ == "__main__":
     #     print( batch )
     parser = argparse.ArgumentParser(description="CodeT5+ finetuning on Seq2Seq LM task")
     parser.add_argument('--data-num', default=-1, type=int)
-    parser.add_argument('--max-source-len', default=320, type=int)
+    parser.add_argument('--max-source-len', default=512, type=int)
     parser.add_argument('--max-target-len', default=128, type=int)
     parser.add_argument('--instruct-data-path', default='../data/training_data.pkl', type=str)
     parser.add_argument('--evaluate-data-path', default='../data/eval_data.pkl', type=str)

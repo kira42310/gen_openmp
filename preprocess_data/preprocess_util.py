@@ -149,18 +149,128 @@ def drop_dup_pd( items ):
             .drop_duplicates( subset=['for_start', 'for_end'] ) \
             .reset_index( drop=True )
 
-def create_training_data_generative( items, frac, seed ):
-    tmp_df = items[['for_raw','omp_raw']]
-    tmp_df = tmp_df[ ~tmp_df['omp_raw'].isnull() ]
-    tmp_df = tmp_df.rename( columns={ 'for_raw': 'source', 'omp_raw': 'target' } )
-    tmp_df = tmp_df.drop_duplicates()
-    tr_df = tmp_df.sample( frac=frac, random_state=seed )
-    ev_df = tmp_df.drop( tr_df.index ).reset_index( drop=True )
-    tr_df = tr_df.reset_index( drop=True )
+def add_stars_reponame_to_pd( data ):
+    stars = []
+    repo_name = []
+    tmp = data['file_path']
+    for path in tmp:
+        p = path.split( '/' )
+        stars.append( p[2] )
+        repo_name.append( '/'.join( [ p[3],p[4] ] ) )
+    data['stars'] = stars
+    data['repo_name'] = repo_name
+    return data
+
+def add_tokens_to_pd( data ):
+    from sctokenizer import CppTokenizer
+    tokenizer = CppTokenizer()
+    tokens_for_list = []
+    count_for_list = []
+    tokens_omp_list = []
+    count_omp_list = []
+    for i, d in data.iterrows():
+        if d['parallel'] == 1:
+            raw_for = d['for_raw']
+            raw_omp = d['omp_raw'] 
+            tokens_for = tokenizer.tokenize( raw_for )
+            tokens_omp = tokenizer.tokenize( raw_omp )
+            tmp_for = [ token.token_value for token in tokens_for ]
+            tmp_omp = [ token.token_value for token in tokens_omp ]
+            tokens_for_list.append( tmp_for )
+            tokens_omp_list.append( tmp_omp )
+            count_for_list.append( len( tmp_for ) )
+            count_omp_list.append( len( tmp_omp ) )
+        else:
+            raw_for = d['for_raw']
+            tokens_for = tokenizer.tokenize( raw_for )
+            tmp_for = [ token.token_value for token in tokens_for ]
+            tokens_for_list.append( tmp_for )
+            tokens_omp_list.append( None )
+            count_for_list.append( len( tmp_for ) )
+            count_omp_list.append( 0 )
+    data['tokens_for'] = tokens_for_list
+    data['tokens_count_for'] = count_for_list
+    data['tokens_omp'] = tokens_omp_list
+    data['tokens_count_omp'] = count_omp_list
+    return data
+
+def get_frac( stars ):
+    s = str( stars )
+    if s == '4':
+        return 0.01
+    elif s == '3':
+        return 0.05
+    elif s == '2':
+        return 0.1
+    return 0.1
+
+
+def create_training_data_generative( items, frac: float = 1, seed: int = 4, filter: list = None ):
+    tmp_df = items[items['parallel'] == 1]
+    tmp_df = tmp_df[ tmp_df['tokens_count_for'] > 20 ]
+    tmp_df = tmp_df if filter is None else tmp_df[tmp_df['kind'].isin(filter)]
+
+    ### seperate by repo name ###
+    train_df = pd.DataFrame()
+    eval_df = pd.DataFrame()
+    for name in tmp_df['repo_name'].unique():
+        repo_df = tmp_df[ tmp_df['repo_name'] == name ]
+        stars = str( repo_df.iloc[0]['stars'] )
+        if( stars == '5' ):
+            repo_df = repo_df.drop_duplicates( subset=['for_raw', 'omp_raw'] )
+            train_df = pd.concat( [ train_df, repo_df ] )
+        else:
+            frac_v = 1 - get_frac( stars )
+            repo_df = repo_df.drop_duplicates( subset=['for_raw'] )
+            tmp_train_df = repo_df.sample( frac=frac_v, random_state=seed )
+            tmp_eval_df = repo_df.drop( tmp_train_df.index )
+            train_df = pd.concat( [ train_df, tmp_train_df ] )
+            eval_df = pd.concat( [ eval_df, tmp_eval_df ] )
+
+            # for_dup = repo_df.duplicated( subset=['for_raw'] ).value_counts().sort_index()
+            # for_dup_count = ( ( 0 if for_dup.index.tolist()[0] == False else for_dup[0] ) if len( for_dup ) == 1 else for_dup[1] )
+            # all_dup = repo_df.duplicated( subset=['for_raw', 'omp_raw'] ).value_counts().sort_index()
+            # all_dup_count = ( ( 0 if all_dup.index.tolist()[0] == False else for_dup[0] ) if len( all_dup ) == 1 else all_dup[1] )
+            # # print( for_dup_count, for_dup_count*1.111, all_dup_count )
+            # if( for_dup_count == 0 and all_dup_count == 0 ):
+            #     train_df = pd.concat( [ train_df, repo_df ] )
+            # elif( all_dup_count * 1.111 ) >= for_dup_count:
+            #     repo_df = repo_df.drop_duplicates( subset=['for_raw'] )
+            #     train_df = pd.concat( [ train_df, repo_df ] )
+            # else:
+            #     frac = get_frac( stars )
+            #     repo_df = repo_df.drop_duplicates( subset=['for_raw', 'omp_raw'] )
+            #     tmp_eval_df = repo_df[repo_df.duplicated( subset=['for_raw'] ) ]
+            #     tmp_train_df = repo_df.drop( tmp_eval_df.index )
+            #     tmp_eval_df = tmp_eval_df.sample( frac=frac )
+            #     # tmp_leftover = dup_df.drop( tmp_eval_df.index )
+            #     # tmp_train_df = pd.concat( [ tmp_train_df, tmp_leftover ] )
+            #     # train_df = pd.concat( [ train_df, tmp_train_df, tmp_leftover ] )
+            #     train_df = pd.concat( [ train_df, tmp_train_df ] )
+            #     eval_df = pd.concat( [ eval_df, tmp_eval_df ] )
+
+        # new_df = pd.concat( [new_df,repo_df] )
+
+    # train_df = train_df[['for_raw','omp_raw']].rename( columns={ 'for_raw': 'source', 'omp_raw': 'target' } ).reset_index( drop=True )
+    # eval_df = eval_df[['for_raw','omp_raw']].rename( columns={ 'for_raw': 'source', 'omp_raw': 'target' } ).reset_index( drop=True )
+    train_df = train_df[['for_raw','omp_raw','tokens_count_for','stars', 'repo_name']].rename( columns={ 'for_raw': 'source', 'omp_raw': 'target' } ).reset_index( drop=True )
+    eval_df = eval_df[['for_raw','omp_raw','tokens_count_for', 'stars', 'repo_name']].rename( columns={ 'for_raw': 'source', 'omp_raw': 'target' } ).reset_index( drop=True )
     return {
-        'train_data': tr_df,
-        'eval_data': ev_df
+        'train_data': train_df,
+        'eval_data': eval_df
     }
+
+    # tmp_df = tmp_df[['for_raw','omp_raw']]
+    # tmp_df = tmp_df[ ~tmp_df['omp_raw'].isnull() ]
+    # tmp_df = tmp_df.rename( columns={ 'for_raw': 'source', 'omp_raw': 'target' } )
+    # tmp_df = tmp_df.drop_duplicates()
+    # tr_df = tmp_df.sample( frac=frac, random_state=seed )
+    # ev_df = tmp_df.drop( tr_df.index ).reset_index( drop=True )
+    # tr_df = tr_df.reset_index( drop=True )
+    # return {
+    #     'train_data': tr_df,
+    #     'eval_data': ev_df
+    # }
 
 def create_training_data_classification( items ):
     tmp_df = items[['for_raw','parallel']]
