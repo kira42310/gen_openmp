@@ -1,0 +1,105 @@
+0
+#pragma omp for
+#pragma omp for schedule(static) nowait
+#pragma omp for
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static)
+#pragma omp for
+#pragma omp for schedule(static)
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static)
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static) nowait
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp parallel for default(shared) private(j) \ reduction(+:norm_temp1,norm_temp2)
+#pragma omp parallel for default(shared) private(j)
+#pragma omp for
+#pragma omp for reduction(+:rho)
+#pragma omp for
+#pragma omp for reduction(+:d)
+#pragma omp for
+#pragma omp for reduction(+:rho)
+#pragma omp for
+#pragma omp for
+#pragma omp for reduction(+:sum) private(d)
+#pragma omp for reduction(+:sx,sy) schedule(static)
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp parallel for private(q,r,s) reduction(+:chk)
+#pragma omp parallel for default(shared) private(i,j,k,kk,kk2,jj,kj2,ii)
+#pragma omp parallel for default(shared) private(k,j,x0)
+#pragma omp parallel for default(shared) private(i,j,k)
+#pragma omp parallel for shared(u0, u1, twiddle) private(i,j,k)
+#pragma omp for nowait
+#pragma omp for schedule(static)
+#pragma omp parallel for reduction(+:j)
+#pragma omp for schedule(static)
+#pragma omp for schedule(static)
+#pragma omp for schedule(dynamic)
+#pragma omp for nowait schedule(static)
+#pragma omp for nowait schedule(static)
+#pragma omp for nowait schedule(static)
+#pragma omp for nowait schedule(static)
+#pragma omp parallel for private(i,j,k,m)
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for nowait
+#pragma omp parallel for default(shared) private(i,j,k,m,tmp)
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp parallel for default(shared) private(i,j,k,m,pxi,peta,pzeta,xi,eta,zeta,ue_ijnz,ue_ij1,ue_iny0k,ue_i1k,ue_nx0jk,ue_1jk) \ shared(nx0,ny0,nz)
+#pragma omp for
+#pragma omp parallel for private(i,j,k,m)
+#pragma omp parallel for private(i, j, n, m)
+#pragma omp for
+#pragma omp for
+#pragma omp for nowait
+#pragma omp parallel for default(shared) private(i1,i2,i3,z1,z2,z3)
+#pragma omp for
+#pragma omp for nowait
+#pragma omp parallel for default(shared) private(i1,i2,i3,a) reduction(+:s) reduction(max:rnmu)
+#pragma omp parallel for default(shared) private(i1,i2,i3,r1,r2)
+#pragma omp parallel for default(shared) private(i1,i2,i3,u1,u2)
+#pragma omp parallel for default(shared) \ private(j1,j2,j3,i1,i2,i3,x1,y1,x2,y2)
+#pragma omp parallel for private(i1,i2,i3)
+#pragma omp parallel for private(i,j,k,m)
+#pragma omp for schedule(static) nowait
+#pragma omp for
+#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static)
+#pragma omp for
+#pragma omp for schedule(static)
+#pragma omp for schedule(static)
+#pragma omp for
+#pragma omp for schedule(static)
+#pragma omp for schedule(static)
+#pragma omp parallel for default(shared) private(i,j,k,m)
+#pragma omp parallel for default(none) \ private(i,j,k,r1,r2,r3,r4,r5,t1,t2) \ shared(rhs,rz2,nx2,ny2,nz2,bt)
+#pragma omp parallel for default(none) \ private(i,j,k,r1,r2,r3,r4,r5,t1,t2) \ shared(rhs,rz2,nx2,ny2,nz2,bt)
+#pragma omp parallel for default(shared) \ private(i,j,k,t1,t2,t3,ac,ru1,uu,vv,ww,r1,r2,r3,r4,r5,ac2inv)
+#pragma omp parallel for default(none) \ private(i,j,k,t1,t2,t3,ac,xvel,yvel,zvel,r1,r2,r3,r4,r5,btuz,ac2u,uzik1) \ shared(rhs,u,s,nx2,ny2,nz2,us,vs,ws,speed,rhs,uzik1,t1,t2,t3,ac2u,uzik1)
+#pragma omp parallel for default(shared) private(i,j,k,i1,i2,m,fac1,fac2,fac3,dttx2,dttx1,fac4,comz1,fac5,dttx2,fac6,dttx3)
+#pragma omp parallel for
+#pragma omp for

@@ -1,0 +1,78 @@
+#pragma omp for reduction(+:sx,sy)
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for reduction(+:s,rnmu_local) 
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for reduction(+:rho)
+#pragma omp for nowait
+#pragma omp for reduction(+:d)
+-
+#pragma omp for reduction(+:rho)
+#pragma omp for
+#pragma omp for nowait
+#pragma omp for reduction(+:sum)
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp parallel for private(i,j,kk,kk2,jj,kj2,ii)
+#pragma omp parallel for private(k,j,x0)
+#pragma omp for
+#pragma omp for schedule(static)
+#pragma omp for schedule(static)
+#pragma omp for schedule(dynamic)
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for nowait schedule(static)
+#pragma omp for nowait schedule(static)
+#pragma omp for nowait schedule(static)
+#pragma omp for nowait schedule(static)
+#pragma omp for nowait schedule(static)
+#pragma omp for nowait schedule(static)
+#pragma omp for nowait
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for
+#pragma omp for

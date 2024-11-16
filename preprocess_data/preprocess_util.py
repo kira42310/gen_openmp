@@ -276,3 +276,6 @@ def create_training_data_classification( items ):
     tmp_df = items[['for_raw','parallel']]
     tmp_df = tmp_df.rename( columns={ 'for_raw': 'source', 'parallel': 'target' } )
     return tmp_df
+
+def fix_space_nline( data ):
+    return ' '.join( ' '.join( data.split('\n') ).split() )

@@ -1,0 +1,78 @@
+0 #pragma omp parallel for reduction(+:sx,sy)
+1 #pragma omp parallel for
+1 #pragma omp parallel for
+1 #pragma omp parallel for
+1 #pragma omp parallel for default(shared) private(i1,i2,i3,z1,z2,z3)
+1 #pragma omp parallel for
+1 #pragma omp parallel for
+0 #pragma omp parallel for default(shared) private(i1,i2,i3,a) reduction(+:s) reduction(max:rnmu)
+1 #pragma omp parallel for default(shared) private(i1,i2,i3,r1,r2)
+1 #pragma omp parallel for default(shared) private(i1,i2,i3,u1,u2)
+1 #pragma omp parallel for default(shared) private(j1,j2,j3,i1,i2,i3,x1,y1,x2,y2)
+1 #pragma omp parallel for private(i2,i1)
+1 #pragma omp parallel for
+1 #pragma omp parallel for reduction(+:rho)
+1 #pragma omp parallel for
+1 #pragma omp parallel for reduction(+:d)
+1 #pragma omp parallel for
+1 #pragma omp parallel for reduction(+:rho)
+1 #pragma omp parallel for
+1 #pragma omp parallel for
+1 #pragma omp parallel for reduction(+:sum) private(d)
+0 #pragma omp parallel for
+0 #pragma omp parallel for
+0 #pragma omp parallel for
+0 #pragma omp parallel for
+1 #pragma omp parallel for default(shared) private(i,j,k,kk,kk2,jj,kj2,ii)
+1 #pragma omp parallel for default(shared) private(k,j,x0)
+1 #pragma omp parallel for default(shared) private(i,j,k)
+0 #pragma omp parallel for schedule(static)
+0 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for schedule(dynamic)
+1 #pragma omp parallel for
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for private(i,j,k,m)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for
+1 #pragma omp parallel for
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for private(i,j,k,m)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for private(i,j,k,m)
+0 #pragma omp parallel for
+0 #pragma omp parallel for
+1 #pragma omp parallel for
+1 #pragma omp parallel for default(shared) private(i,j,k,m)
+1 #pragma omp parallel for
+1 #pragma omp parallel for private(i,j,k,m)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for schedule(static)
+1 #pragma omp parallel for default(shared) private(i,j,k,r1,r2,r3,r4,r5,t1,t2)
+1 #pragma omp parallel for default(shared) private(i,j,k,r1,r2,r3,r4,r5,t1,t2)
+1 #pragma omp parallel for default(shared) private(i,j,k,t1,t2,t3,ac,ru1,uu,vv,ww,r1,r2,r3,r4,r5,ac2inv)
+1 #pragma omp parallel for private(i,j,k,t1,t2,t3,ac,xvel,yvel,zvel,r1,r2,r3,r4,r5,btuz,ac2u,uzik1)
+0 #pragma omp parallel for
+0 #pragma omp parallel for
+0 #pragma omp parallel for
+1 #pragma omp parallel for schedule(static)
+0 #pragma omp parallel for
+0 #pragma omp parallel for schedule(static)
+0 #pragma omp parallel for
+1 #pragma omp parallel for
+1 #pragma omp parallel for
+0 #pragma omp parallel for private(k,j,i,m) shared(v,sum)
+1 #pragma omp parallel for private(i,j,k,m,tmp)
+0 #pragma omp parallel for
+0 #pragma omp parallel for
+0 #pragma omp parallel for
+1 #pragma omp parallel for private(k,j,i,m)
+1 #pragma omp parallel for private(k,j,i,m) shared(u,rsd)

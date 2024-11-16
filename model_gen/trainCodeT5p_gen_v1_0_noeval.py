@@ -15,69 +15,6 @@ from sklearn.metrics import f1_score
 location = '/home/mudang/script/gen_openmp/'
 data_location = location + 'data/'
 
-def compute_metrics( pred ):
-    preds, labels = pred
-
-    print( '-----------------------------0-----------------------------' )
-    print( '' )
-    print( len( preds ) )
-    print( preds[0] )
-    print( len( labels ) )
-    print( labels[0] )
-
-    times = len( preds ) / 50
-
-    decoded_preds = []
-    decoded_labels = []
-
-    for i in range( times + 1 ):
-
-        start = i * 100
-        end = start + 100
-        if( end > len( preds ) ):
-            end = len( preds )
-
-        tmp_preds = preds[ start: end ]
-        tmp_labels = labels[ start: end ]
-
-        # decoded_preds = [ tokenizer.decode( pred, skip_special_tokens=True ) for pred in preds ]
-        # decoded_labels = [ tokenizer.decode( label, skip_special_tokens=True ) for label in labels ]
-        print( '-----------------------------1-----------------------------' )
-        # decoded_preds = tokenizer.batch_decode( tmp_preds, skip_special_tokens=True )
-        tmp_preds = tokenizer.batch_decode( tmp_preds, skip_special_tokens=True )
-        # decoded_preds = [ tokenizer.decode( pred, skip_special_tokens=True ) for pred in preds ]
-        print( '-----------------------------2-----------------------------' )
-        # labels = [ [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in model_inputs["labels"] ]
-        tmp_labels = np.where(labels != -100, tmp_labels, tokenizer.pad_token_id)
-        print( '-----------------------------3-----------------------------' )
-        tmp_labels = tokenizer.batch_decode( tmp_labels, skip_special_tokens=True )
-        print( '-----------------------------4-----------------------------' )
-        decoded_preds.extend( tmp_preds )
-        decoded_labels.extend( tmp_labels )
-        del tmp_preds
-        del tmp_labels
-    # predictions = np.
-    # labels = pred.label_ids
-    # preds = pred.prediction.argmax(-1)
-
-    # em = exact match
-    # em = sum( [ 1 if p == l else 0 for p, l in zip( preds, labels ) ]  ) / len( labels )
-
-    # f1 = f1_score( labels, preds, average='marco' )
-    
-    # return {
-    #     'f1': f1,
-    #     'exact_match': em
-    # }
-    print( decoded_labels )
-    # print( labels )
-    print( decoded_preds )
-    results = metric.compute( predictions=decoded_preds, references=decoded_labels )
-    #results = metric.compute( predictions=decoded_preds, references=labels )
-    # results = metric.compute( predictions=preds, references=labels )
-    #print( results )
-    return results
-
 # def run_training( args, model, device, train_data, eval_data ):
 def run_training( args, model, train_data, save_steps ):
     # do somethings
@@ -92,7 +29,7 @@ def run_training( args, model, train_data, save_steps ):
         save_steps=save_steps,
         # save_strategy='epoch',
         # evaluation_strategy='epoch',
-        save_total_limit=10,
+        save_total_limit=args.save_limit,
 
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size_per_replica,
@@ -136,7 +73,7 @@ def run_training( args, model, train_data, save_steps ):
 
     # print( results )
 
-    # final_checkpoint_dir = os.path.join(args.save_dir, "final_checkpoint")
+    # final_checkpornt_dir = os.path.join(args.save_dir, "final_checkpoint")
     # print(f'  ==> Finish training and save to {final_checkpoint_dir}')
     if args.local_rank in [0, -1]:
         final_checkpoint_dir = os.path.join(args.save_dir, "final_checkpoint")
@@ -276,6 +213,7 @@ if __name__ == "__main__":
     parser.add_argument('--deepspeed', default="deepspeed_config.json", type=str)
     parser.add_argument('--fp16', default=False, action='store_true')
     parser.add_argument('--early_stop', default=4, type=int)
+    parser.add_argument('--save_limit', default=4, type=int)
 
     # Logging and stuff
     # parser.add_argument('--save-dir', default="saved_models/openmp_gen", type=str)
